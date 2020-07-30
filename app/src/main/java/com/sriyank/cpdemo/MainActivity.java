@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -21,8 +22,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private SQLiteDatabase database;
-    private NationDbHelper dataBaseHelper;
+    //private SQLiteDatabase database;
+    //private NationDbHelper dataBaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,8 +49,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnQueryByRowId.setOnClickListener(this);
         btnDisplayAll.setOnClickListener(this);
 
-        dataBaseHelper = new NationDbHelper(this);
-        database = dataBaseHelper.getWritableDatabase(); //connect to SQLite db (perform read/write operation)
+        //dataBaseHelper = new NationDbHelper(this);
+        //database = dataBaseHelper.getWritableDatabase(); //connect to SQLite db (perform read/write operation)
 
     }
 
@@ -90,12 +91,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         contentValues.put(NationEntry.COLUMN_COUNTRY, countryName);
         contentValues.put(NationEntry.COLUMN_CONTINENT, continentName);
 
-        //insert the above content values to the NationEntry table
+/**     //insert the above content values to the NationEntry table
         //rowId is the value of the _ID column
-        long rowId = database.insert(NationEntry.TABLE_NAME, null, contentValues);
+        long rowId = database.insert(NationEntry.TABLE_NAME, null, contentValues); Instead of directly inserting data to the db from this class, the Content Provider is now used to perform insert operation
         //display mgs on logcat when a new row is inserted
-        Log.i(TAG, "item inserted with row id" + rowId);
+        Log.i(TAG, "item inserted with row id" + rowId);    */
 
+        //declare content uri i.e. content://com.sriyank.cpdemo.data.NationProvider/countries (based on the insert parameter below)
+        Uri uri = NationEntry.CONTENT_URI;
+
+        //use content provider to get data from the database. The insert method will trigger the one in NationProvider class
+        Uri uriRowInserted = getContentResolver().insert(uri, contentValues);
+        Log.i(TAG, " item inserted at " + uriRowInserted);
 
     }
 
@@ -110,7 +117,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ContentValues contentValues = new ContentValues();
         contentValues.put(NationEntry.COLUMN_CONTINENT, newContinent);  //update continent column based on the newContinent provided by user
 
-        int rowsUpdated = database.update(NationEntry.TABLE_NAME, contentValues, selection, selectionArgs); //update db: returns integer value (rowsUpdate)
+ /**    int rowsUpdated = database.update(NationEntry.TABLE_NAME, contentValues, selection, selectionArgs); //update db: returns integer value (rowsUpdate)
+        Log.i(TAG, "Numbers of rows updated" + rowsUpdated);    */
+
+        Uri uri = NationEntry.CONTENT_URI;
+        Log.i(TAG, "" + uri);
+        int rowsUpdated = getContentResolver().update(uri, contentValues, selection, selectionArgs);
         Log.i(TAG, "Numbers of rows updated" + rowsUpdated);
 
     }
@@ -122,9 +134,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String selection = NationEntry.COLUMN_COUNTRY + " = ? "; // the selection can be set based on any column name including the _id
         String[] selectionArgs = {countryName};
 
-        int rowsDeleted = database.delete(NationEntry.TABLE_NAME, selection, selectionArgs);
-        Log.i(TAG, "Number of rows deleted" + rowsDeleted);
+/**     int rowsDeleted = database.delete(NationEntry.TABLE_NAME, selection, selectionArgs);
+        Log.i(TAG, "Number of rows deleted" + rowsDeleted); */
 
+        Uri uri = Uri.withAppendedPath(NationEntry.CONTENT_URI, countryName);
+        Log.i(TAG, "" + uri);
+        int rowsDeleted = getContentResolver().delete(uri, selection, selectionArgs);
+        Log.i(TAG, "Number of rows deleted" + rowsDeleted);
     }
     private void queryRowById() {
         //since selectionArgs accepts string value there's need to convert rowId to string
@@ -138,10 +154,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String[] selectionArgs = {rowId};   //filter database based on rowId which will be entered by users
         // i.e. "_id = ?" of the selection parameter will be changed(?) to whatever id user insert
 
-        //Cursor is an object that contains the reference of all the rows - the above columns will be present in these rows
+/**     //Cursor is an object that contains the reference of all the rows - the above columns will be present in these rows
         //it enables the output of database values
         Cursor cursor = database.query(NationEntry.TABLE_NAME, projection, NationEntry._ID + " = ?",
-                selectionArgs, null, null, null);
+                selectionArgs, null, null, null);      */
+
+        //uri should contain "_id = ?" that's why the rowId is appended to it
+        Uri uri = Uri.withAppendedPath(NationEntry.CONTENT_URI, rowId);
+        Cursor cursor = getContentResolver().query(uri, projection, NationEntry._ID + " = ?",
+                selectionArgs, null);
 
         if (cursor != null && cursor.moveToNext()) {   //if cursor is not null, move to next row and output the single row requested by the user
 
@@ -164,10 +185,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
              NationEntry.COLUMN_COUNTRY,
              NationEntry.COLUMN_CONTINENT
         };
-        //Cursor is an object that contains the reference of all the rows - the above columns will be present in these rows
-         //it enables the output of database values
+
+/**     //Cursor is an object that contains the reference of all the rows - the above columns will be present in these rows
+        //it enables the output of database values
         Cursor cursor = database.query(NationEntry.TABLE_NAME, projection, null,
                 null, null, null, null);
+
+        * this code enables data to be accessed directly from main activity.
+        * It's no longer needed since data will now be queried using the content provider
+ */
+        //define content uri
+        Uri uri = NationEntry.CONTENT_URI;
+        Log.i(TAG, "" + uri);
+        Cursor cursor = getContentResolver().query(uri, projection, null, null, null);  //passed from CP class
 
          if (cursor != null) {          //check if cursor is not null . . .
              String str = "";
@@ -183,12 +213,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
          }
     }
 
-    @Override
+/**    @Override
     protected void onDestroy() {
         //close the connection between db and MainActivity
         database.close();
         super.onDestroy();
-    }
+    }    method is no longer needed*/
 }
 
 

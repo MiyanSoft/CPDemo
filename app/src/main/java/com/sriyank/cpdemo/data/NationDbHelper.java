@@ -19,7 +19,7 @@ public class NationDbHelper extends SQLiteOpenHelper {
 			+ " (" + NationEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
 			+ NationEntry.COLUMN_COUNTRY + " TEXT NOT NULL, "
 			+ NationEntry.COLUMN_CONTINENT + " TEXT"
-			+ ");";
+			+ ")";
 	//this constructor contains many parameters but only the context is needed
 	//responsible for SQLite database - creating, upgrading and downgrading
 	public NationDbHelper(Context context) {
