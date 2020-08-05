@@ -22,6 +22,9 @@
             android:authorities="com.sriyank.cpdemo.data.NationProvider"
             android:name=".data.NationProvider"
             android:exported="false"/>
+
+        <activity android:name=".NationListActivity"/>
+        <activity android:name=".NationEditActivity"/>
     </application>
 
 </manifest>
